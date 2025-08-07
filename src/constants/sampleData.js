@@ -8,7 +8,7 @@ const userData = [
   {
     name: 'Anish',
     role: 'QA Engineer',
-    description: 'Automation tester with 2.6 years of Experience',
+    description: 'Automation tester with 5 years of Experience',
     imageSrc: 'https://res.cloudinary.com/akhilsrg/image/upload/v1751467750/x8w3mzqo9uxefl28tjva.jpg'
   },
   {
