@@ -1,0 +1,44 @@
+.card {
+    padding: 10px 0;
+}
+
+.cardHeader {
+    font-size: 17px;
+    font-style: italic;
+}
+
+.content {
+    text-align: center;
+    font-size: 15px;
+}
+
+.navigationButtons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+
+    .prev, .next {
+        padding: 5px 10px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+
+        &:hover {
+            background-color: #0056b3;
+        }
+    }
+}
+
+.imageContainer {
+    margin-top: 10px;
+
+    .userImage {
+        border-radius: 50%;
+        border: 2px solid #007bff;
+        object-fit: cover;
+    }
+
+}
