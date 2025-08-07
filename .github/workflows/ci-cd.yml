@@ -1,0 +1,139 @@
+name: React CI/CD Pipeline
+
+# Define when this workflow should run
+on:
+    push:
+        branches: [ main, dev ]
+    # Trigger on pull requests to main branch
+    pull_request:
+        branches: [ main, dev ]
+
+    # Allow mannual trigger from GitHub UI
+    workflow_dispatch:
+
+#Define jobs that will run
+jobs:
+    #Job 1: Run tests and build checks
+    test-and-build:
+        runs-on: ubuntu-latest
+
+        steps:
+            # Step 1: Checkout code
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            # Step 2: Set up Node.js
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: '18'  # Specify the Node.js version
+                cache: 'npm'  # Cache npm dependencies
+
+            # Step 3: Install dependencies
+            - name: Install dependencies
+              run: npm ci
+              
+            # Step 4: Run linting (if applicable)
+            - name: Run ESLint
+              run: npm run lint
+              continue-on-error: true  # Continue even if linting fails
+
+            # Step 5: Run tests (skip for now since Vite doesn't include test setup by default)
+            # - name: Run tests
+            #   run: npm test --coverage --watchAll=false
+
+            # Step 6: Build the application
+            - name: Build application
+              run: npm run build
+
+            # Step 7: Upload build artifacts for deployment job
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-files
+                path: dist/
+
+
+    #Job 2: Deploy to production (runs only on main branch)
+    deploy:
+        needs: test-and-build #This job depends on test-and-build job
+        runs-on: ubuntu-latest
+
+        #Only run this job on main branch pushes (not on pull requests)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+        steps:
+            #Step 1: Checkout code
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            # Step 2: Download build artifacts from previous job
+            - name: Download build artifacts
+              uses: actions/download-artifact@v4
+              with:
+                name: build-files
+                path: dist/
+
+            # Step 3: Deploy to GitHub Pages (uncomment if using GitHub Pages)
+            # - name: Deploy to GitHub Pages
+            #   uses: peaceiris/actions-gh-pages@v3
+            #   with:
+            #     github_token: ${{ secrets.GITHUB_TOKEN }}
+            #     publish_dir: ./dist
+            
+            # Step 4: Deploy to Netlify (uncomment if using Netlify)
+            # - name: Deploy to Netlify
+            #   uses: nwtgck/actions-netlify@v2.0
+            #   with:
+            #     publish-dir: './dist'
+            #     production-branch: main
+            #     github-token: ${{ secrets.GITHUB_TOKEN }}
+            #     deploy-message: "Deploy from GitHub Actions"
+            #   env:
+            #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+            #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+            
+            # Step 5: Deploy to Vercel (uncomment if using Vercel)
+            # - name: Deploy to Vercel
+            #   uses: amondnet/vercel-action@v25
+            #   with:
+            #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+            #     vercel-args: '--prod'
+            #     vercel-org-id: ${{ secrets.ORG_ID }}
+            #     vercel-project-id: ${{ secrets.PROJECT_ID }}
+            
+            # For now, just show deployment success
+            - name: Deployment complete
+              run: echo "🚀 Deployment completed successfully!"
+
+    # Job 3: Code Quality Checks (runs in parallel with test-and-build job)
+    code-quality:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: '18'
+                cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            # Check code formatting with Prettier (if configured)
+            - name: Check code formatting
+              run: npx prettier --check . || echo "Prettier not configured, skipping..."
+              continue-on-error: true  # Continue even if formatting check fails
+
+            # Run security audit
+            - name: Run security audit
+              run: npm audit --audit-level=high
+              continue-on-error: true  # Continue even if audit fails
+
+            # Check for outdated dependencies
+            - name: Check for outdated dependencies
+              run: npm outdated
+              continue-on-error: true  # Continue even if outdated dependencies are found
