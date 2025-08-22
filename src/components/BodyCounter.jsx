@@ -11,7 +11,7 @@ function BodyCounter() {
         }, 5 * 1000)
 
         return () => clearInterval(timer);
-    }, [total]);
+    }, [total, currentIndex]);
 
     const goNext = () => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % total);
